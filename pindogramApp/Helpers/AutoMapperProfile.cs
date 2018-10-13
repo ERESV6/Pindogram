@@ -11,6 +11,8 @@ namespace pindogramApp.Helpers
         {
             CreateMap<User, UserDto>();
             CreateMap<UserDto, User>();
+            CreateMap<Meme, MemeDto>();
+            CreateMap<MemeDto, Meme>();
         }
     }
 }

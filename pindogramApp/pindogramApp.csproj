@@ -36,6 +36,19 @@
     <None Include="$(SpaRoot)**" Exclude="$(SpaRoot)node_modules\**" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Compile Remove="Migrations\20181012114803_Meme.cs" />
+    <Compile Remove="Migrations\20181012114803_Meme.Designer.cs" />
+    <Compile Remove="Migrations\20181012183032_Memev2.cs" />
+    <Compile Remove="Migrations\20181012183032_Memev2.Designer.cs" />
+    <Compile Remove="Migrations\20181012201133_MemeLikes.cs" />
+    <Compile Remove="Migrations\20181012201133_MemeLikes.Designer.cs" />
+    <Compile Remove="Migrations\20181012211349_MemeRates.cs" />
+    <Compile Remove="Migrations\20181012211349_MemeRates.Designer.cs" />
+    <Compile Remove="Migrations\20181012223536_Memes.cs" />
+    <Compile Remove="Migrations\20181012223536_Memes.Designer.cs" />
+  </ItemGroup>
+
   <Target Name="DebugEnsureNodeEnv" BeforeTargets="Build" Condition=" '$(Configuration)' == 'Debug' And !Exists('$(SpaRoot)node_modules') ">
     <!-- Ensure Node.js is installed -->
     <Exec Command="node --version" ContinueOnError="true">

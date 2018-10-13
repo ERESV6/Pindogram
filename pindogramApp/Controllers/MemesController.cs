@@ -7,7 +7,11 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using pindogramApp.Entities;
 using Microsoft.AspNetCore.Authorization;
-
+using System.Security.Claims;
+using AutoMapper;
+using pindogramApp.Services.Interfaces;
+using pindogramApp.Helpers;
+using pindogramApp.Dtos;
 
 namespace pindogramApp.Controllers
 {
@@ -17,21 +21,81 @@ namespace pindogramApp.Controllers
     public class MemesController : ControllerBase
     {
         private readonly PindogramDataContext _context;
+        private IMemeService _memeService;
+        private IMapper _mapper;
 
-        public MemesController(PindogramDataContext context)
+        public MemesController(PindogramDataContext context, IMapper mapper, IMemeService MemeService)
         {
+            _memeService = MemeService;
             _context = context;
         }
 
-        // GET: api/Memes
-        [AllowAnonymous]
-        [HttpGet]
-        public IEnumerable<Meme> GetMeme()
+        [HttpPost("postmeme")]
+        public async Task<IActionResult> Post(string title)
         {
-            return _context.Meme;
+
+            User loggedUser = getLoggedUser();
+            if (loggedUser == null)
+            {
+                return BadRequest(new { message = "Not logged in" });
+            }
+            if (String.IsNullOrEmpty(title))
+            {
+                return BadRequest(new { message = "Cannot add untitled meme" });
+            }
+            try
+            {
+                // save 
+                _memeService.Post(title, loggedUser);
+                return Ok();
+            }
+            catch (AppException ex)
+            {
+                // return error message if there was an exception
+                return BadRequest(new { message = ex.Message });
+            }
         }
 
-        // GET: api/Memes/5
+        [HttpPost("upvote")]
+        public async Task<IActionResult> Upvote(int memeId)
+        {
+            User loggedUser = getLoggedUser();
+            try
+            {
+                _memeService.Upvote(memeId, loggedUser);
+                return Ok();
+            }
+            catch (AppException ex)
+            {
+                // return error message if there was an exception
+                return BadRequest(new { message = ex.Message });
+            }
+
+        }
+
+        [HttpPost("downvote")]
+        public async Task<IActionResult> Downvote(int memeId)
+        {
+            User loggedUser = getLoggedUser();
+            try
+            {
+                _memeService.Downvote(memeId, loggedUser);
+                return Ok();
+            }
+            catch (AppException ex)
+            {
+                // return error message if there was an exception
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
+        [AllowAnonymous]
+        [HttpGet]
+        public IEnumerable<Meme> GetMemes()
+        {
+            return _context.Memes;
+        }
+
         [AllowAnonymous]
         [HttpGet("{id}")]
         public async Task<IActionResult> GetMeme([FromRoute] int id)
@@ -41,7 +105,7 @@ namespace pindogramApp.Controllers
                 return BadRequest(ModelState);
             }
 
-            var meme = await _context.Meme.FindAsync(id);
+            var meme = await _context.Memes.FindAsync(id);
 
             if (meme == null)
             {
@@ -51,58 +115,23 @@ namespace pindogramApp.Controllers
             return Ok(meme);
         }
 
-        // PUT: api/Memes/5
-        [HttpPut("{id}")]
-        public async Task<IActionResult> PutMeme([FromRoute] int id, [FromBody] Meme meme)
+        [AllowAnonymous]
+        [HttpGet("getRate")]
+        public async Task<IActionResult> GetRate(int memeId)
         {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
-
-            if (id != meme.Id)
-            {
-                return BadRequest();
-            }
-
-            _context.Entry(meme).State = EntityState.Modified;
-
+            
             try
             {
-                await _context.SaveChangesAsync();
+                int rate = 0;
+                rate = _memeService.GetRate(memeId);
+                return Ok(rate);
             }
-            catch (DbUpdateConcurrencyException)
+            catch (AppException ex)
             {
-                if (!MemeExists(id))
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
+                // return error message if there was an exception
+                return BadRequest(new { message = ex.Message });
             }
-
-            return NoContent();
         }
-
-
-
-        // POST: api/Memes
-        [HttpPost]
-        public async Task<IActionResult> PostMeme([FromBody] Meme meme)
-        {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
-
-            _context.Meme.Add(meme);
-            await _context.SaveChangesAsync();
-
-            return CreatedAtAction("GetMeme", new { id = meme.Id }, meme);
-        }
-
         // DELETE: api/Memes/5
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteMeme([FromRoute] int id)
@@ -112,13 +141,13 @@ namespace pindogramApp.Controllers
                 return BadRequest(ModelState);
             }
 
-            var meme = await _context.Meme.FindAsync(id);
+            var meme = await _context.Memes.FindAsync(id);
             if (meme == null)
             {
                 return NotFound();
             }
 
-            _context.Meme.Remove(meme);
+            _context.Memes.Remove(meme);
             await _context.SaveChangesAsync();
 
             return Ok(meme);
@@ -126,7 +155,15 @@ namespace pindogramApp.Controllers
 
         private bool MemeExists(int id)
         {
-            return _context.Meme.Any(e => e.Id == id);
+            return _context.Memes.Any(e => e.Id == id);
+        }
+
+        private User getLoggedUser()
+        {
+            string strAutId = this.User.FindFirst(ClaimTypes.Name).Value;
+            int autId = int.Parse(strAutId);
+            User loggedUser = _context.Users.First(x => x.Id == autId);
+            return loggedUser;
         }
     }
 }

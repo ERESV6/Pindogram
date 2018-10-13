@@ -3,15 +3,17 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using pindogramApp.Entities;
 
 namespace pindogramApp.Migrations
 {
     [DbContext(typeof(PindogramDataContext))]
-    partial class PindogramDataContextModelSnapshot : ModelSnapshot
+    [Migration("20181012232531_Memes")]
+    partial class Memes
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
